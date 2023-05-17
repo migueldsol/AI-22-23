@@ -1,0 +1,9 @@
+ROW\t2\t3\t2\t2\t3\t0\t1\t3\t2\t2
+COLUMN\t6\t0\t1\t0\t2\t1\t3\t1\t2\t4
+6
+HINT\t0\t0\tT
+HINT\t1\t6\tM
+HINT\t3\t2\tC
+HINT\t6\t0\tW
+HINT\t8\t8\tB
+HINT\t9\t5\tC
