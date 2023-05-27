@@ -46,13 +46,22 @@ class Board:
         self.matrix = np.full((10, 10), "0")
         self.row = rows
         self.collum = collums
-        self.boatPositions = ["C", "T", "M", "B"]
-        """mais merdas ns oque fazer"""
+        self.boatPositions = ["C", "T", "M", "B", "L", "R"]
+        self.BoatSizes = {4: 1, 3: 2, 2: 3, 1: 4}
 
     def get_value(self, row: int, col: int) -> str:
         """Devolve o valor na respetiva posição do tabuleiro."""
         return self.matrix[row][col]
 
+    def highest_boat_size(self):
+        return max(self.BoatSizes.keys())
+
+    def remove_boat_possibility(self, size):
+        self.BoatSizes[size] -= 1
+
+    def check_boat_position(self,position:str):
+        return True if position in self.boatPositions else False
+        
     def adjacent_vertical_values(self, row: int, col: int) -> (str, str):
         """Devolve os valores imediatamente acima e abaixo,
         respectivamente."""
@@ -216,13 +225,19 @@ class Board:
 class Bimaru(Problem):
     def __init__(self, board: Board):
         """O construtor especifica o estado inicial."""
-        # TODO
+        
         pass
 
     def actions(self, state: BimaruState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
-        # TODO
+        actions_list = []
+        for i in range(10):
+            for j in range(10):
+                if state.board.matrix[i, j] in state.board.boatPositions:
+                    
+
+
         pass
 
     def result(self, state: BimaruState, action):
@@ -250,6 +265,8 @@ class Bimaru(Problem):
 
 if __name__ == "__main__":
     ola = Board.parse_instance()
+    Bimaru(ola)
+    BimaruState(ola)
     ola.fill_water()
     ola.print_Board()
     # TODO:
