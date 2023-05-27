@@ -208,7 +208,6 @@ class Board:
             self.matrix[row - 1, column] =  "t"
             self.piece_water_spaces(row - 1, column, "T")
             self.collum[column] = 0
-            print(row)
             self.row[row] -= 1
             self.row[row - 1] -= 1
         if letter == "L" and self.row[row] == 2:
