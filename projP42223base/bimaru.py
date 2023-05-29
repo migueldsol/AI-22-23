@@ -17,6 +17,7 @@ from search import (
     depth_first_tree_search,
     greedy_search,
     recursive_best_first_search,
+    depth_limited_search
 )
 
 
@@ -42,24 +43,36 @@ class Board:
     Vamos colocar uma matriz com letras para representar o valor do ponto
     """
 
-    def __init__(self, rows: list, collums: list):
-        self.matrix = np.full((10, 10), "0")
+    def __init__(self,rows: np.array, collums: np.array, board = None, BoatSizes = None):
+        if board is None:
+            self.matrix = np.full((10, 10), "0")
+            self.BoatSizes = np.array([4,3,2,1])   
+        else:
+            self.matrix = board
+            self.BoatSizes = BoatSizes
+
         self.row = rows
         self.collum = collums
         self.boatPositions = ["C", "T", "M", "B", "L", "R"]
-        self.BoatSizes = {4: 1, 3: 2, 2: 3, 1: 4}   
-        self.boatParts = {"M": 4, "O": 12}          #tamos a contar os Middles e os Top/Bot/Right/Left para verificações
-                                                    #já contamos os Center no BoatSizes
+
+    
+    def deep_copy(self):
+        new_matrix = np.copy(self.matrix)
+        new_row = np.copy(self.row)
+        new_collum = np.copy(self.collum)
+        new_BoatSize = np.copy(self.BoatSizes) 
+        new_board = Board(new_row, new_collum, new_matrix, new_BoatSize)
+        return new_board
 
     def get_value(self, row: int, col: int) -> str:
         """Devolve o valor na respetiva posição do tabuleiro."""
         return self.matrix[row, col]
 
     def highest_boat_size(self):
-        return max(self.BoatSizes.keys())
+        return max(self.BoatSizes)
 
     def remove_boat_possibility(self, size):
-        self.BoatSizes[size] -= 1
+        self.BoatSizes[size - 1] -= 1
 
     def check_boat_position(self,position:str):
         return True if position in self.boatPositions else False
@@ -110,6 +123,8 @@ class Board:
                 
     def piece_water_spaces(self, row: int, column: int, letter: str):
         # do a switch case for each letter fill the surrounding with water(T -> top,left,right, B, Middle->M)
+
+
         if letter.capitalize() == "T":
             if row > 0:
                 self.matrix[row - 1, column] = "."
@@ -187,27 +202,25 @@ class Board:
 
     """Insere uma parte de um navio"""
     def insert_ship_part(self, row, collum, letter):
+
         if self.matrix[row, collum] != "0":
-            raise ValueError
-        if letter == "C":
-            self.BoatSizes[1] -= 1
-        elif letter == "M":
-            self.boatParts["M"] -=1
-        else:
-            self.boatParts["O"] -= 1
-        self.matrix[row, collum] = letter.lower()
+            raise ValueError                        #já tem lá uma parte de navio
+        
+        self.matrix[row, collum] = letter.lower()   #insere letra
+        self.row[row] -= 1                          #atualiza as boat parts da row
+        self.collum[collum] -= 1                    #atualiza as boat parts da collum
+        self.piece_water_spaces(row, collum, letter)
 
     def insert_ship(self, action):
-        print(action)
-        counter = action[0]
-        print(counter, self.BoatSizes[counter])
-        if self.BoatSizes[counter] <= 0:
+        counter = action[0]                         #qual o tamanho do barco?
+
+        if self.BoatSizes[counter - 1] <= 0:            #se não puder por barco
             raise ValueError
         
         for i in range(1, counter + 1):     #seleciona cada tuplo com (x, (row, col, letter) * xVezes, ...)
             self.insert_ship_part(action[i][0], action[i][1], action[i][2])
         
-        self.BoatSizes[counter] -= 1
+        self.BoatSizes[counter - 1] -= 1                #reduz numero de barcos
 
     def print_Board(self):
         """Imprime o tabuleiro no standard output."""
@@ -261,8 +274,8 @@ class Board:
             > from sys import stdin
             > line = stdin.readline().split()
         """
-        row = [int(x.strip()) for x in stdin.readline().split('\t')[1:]]
-        collumn = [int(x.strip()) for x in stdin.readline().split("\t")[1:]]
+        row = np.array([int(x.strip()) for x in stdin.readline().split('\t')[1:]])
+        collumn = np.array([int(x.strip()) for x in stdin.readline().split("\t")[1:]])
         hints = int(stdin.readline())
         hints_list = []
         for i in range(hints):
@@ -290,11 +303,11 @@ class Bimaru(Problem):
     def __init__(self, board: Board):
         """O construtor especifica o estado inicial."""
         board.fill_water()
-        #board.print_Board()
-        self.inicial_state = BimaruState(board)
+        board.print_Board()
+        self.initial = BimaruState(board)
 
     def actions_4_boat(self, state: BimaruState, actions_list):
-        if state.board.BoatSizes[4] != 0 and state.board.boatParts["M"] >= 2 and state.board.boatParts["O"] >= 2:    #faltam barcos de 4?                                      
+        if state.board.BoatSizes[4 - 1] != 0:    #faltam barcos de 4?                                      
 
             for row_i in range(len(state.board.row)):                   #percorrer as rows com os numeros de barcos
                 if state.board.row[row_i] >= 4:                         #existe alguma row para por um barco de 4 peças?
@@ -326,7 +339,7 @@ class Bimaru(Problem):
                             actions_list.append((4,(row_l, col_k,"T"),(row_l + 1, col_k,"M"),(row_l + 2, col_k,"M"),(row_l + 3, col_k,"B")))
 
     def actions_3_boat(self, state: BimaruState, actions_list):
-        if state.board.BoatSizes[3] != 0 and state.board.boatParts["M"] >= 1 and state.board.boatParts["O"] >= 2:           #faltam barcos de 3?
+        if state.board.BoatSizes[3 - 1] != 0:           #faltam barcos de 3?
             for row_i in range(len(state.board.row)):                                   #percorrer as rows com os numeros de barcos
                  if state.board.row[row_i] >= 3:                                        #posso colocar um barco de 3?
                      for col_j in range(10):
@@ -356,7 +369,7 @@ class Bimaru(Problem):
                             actions_list.append((3, (row_l, col_k, "T"), (row_l + 1, col_k, "M"), (row_l + 2, col_k, "B")))
             
     def actions_2_boat(self, state: BimaruState, actions_list):
-        if state.board.BoatSizes[2] != 0 and state.board.boatParts["O"] >= 2:                   #faltam barcos de 2?
+        if state.board.BoatSizes[2 - 1] != 0:                   #faltam barcos de 2?
             for row_i in range(len(state.board.row)):           #percorrer as linhas com o numero de barcos
                 if state.board.row[row_i] >= 2:                 #posso colocar um barco de 2?
                     for col_j in range(10):   
@@ -383,7 +396,7 @@ class Bimaru(Problem):
                             actions_list.append((2,(row_l, col_k,"T"),(row_l + 1, col_k,"B")))
     
     def actions_1_boat(self, state: BimaruState, actions_list):
-        if state.board.BoatSizes[1] != 0:
+        if state.board.BoatSizes[1 - 1] != 0:
             for row_i in range(len(state.board.row)):           #percorrer as linhas com o numero de barcos
                  if state.board.row[row_i] >= 1:                #posso colocar um barco de 1?
                      for col_j in range(10):
@@ -411,16 +424,29 @@ class Bimaru(Problem):
         'state' passado como argumento. A ação a executar deve ser uma
         das presentes na lista obtida pela execução de
         self.actions(state)."""
-        state.board.insert_ship(action)
-        state.board.print_Board()
-        return BimaruState(state.board)
+        print(action)
+        new_state = BimaruState(state.board.deep_copy())
+        new_state.board.insert_ship(action)
+        new_state.board.fill_water()
+        new_state.board.print_Board()
+        return new_state
 
     def goal_test(self, state: BimaruState):
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas de acordo com as regras do problema."""
+
+        for i in state.board.BoatSizes:             #verificação dos barcos
+            if i != 0:      
+                return False
+
+
+        for (i, j) in (self.state.board.row, self.state.board.collum):          #verificação das partes dos barcos
+            if i != 0 or j != 0:
+                return False
+        
         # TODO
-        pass
+        return True
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
@@ -432,8 +458,10 @@ class Bimaru(Problem):
 
 if __name__ == "__main__":
     ola = Board.parse_instance()
-    novo_ola = ola
     new_problem = Bimaru(ola)
+    print(breadth_first_tree_search(new_problem).solution())
+    
+    """
     counter = 4
     for i in new_problem.actions(new_problem.inicial_state):
         even_newer_problem = Bimaru(ola)
@@ -442,6 +470,7 @@ if __name__ == "__main__":
             counter -= 1
         print(i)
         even_newer_problem.result(even_newer_problem.inicial_state, i)
+    """
         
     # TODO:
     # Ler o ficheiro do standard input,
