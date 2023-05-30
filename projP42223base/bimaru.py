@@ -42,6 +42,7 @@ class Board:
     A representação vai ser feita através do Numpy
     Vamos colocar uma matriz com letras para representar o valor do ponto
     """
+    boardHints = []
 
     def __init__(self,rows: np.array, collums: np.array, board = None, BoatSizes = None):
         if board is None:
@@ -232,7 +233,7 @@ class Board:
             board_string += "\n"
         print(board_string)
 
-    def fit_boat_of_two(self, row: int, column: int, letter: str):
+    def fit_hints(self, row: int, column: int, letter: str):
         """Verifica se é possivel meter uma peça de tamanho dois numa linha com tamanho dois"""
         if letter == "T" and self.collum[column] == 2:
             self.matrix[row, column] = "T"
@@ -241,27 +242,29 @@ class Board:
             self.collum[column] = 0
             self.row[row] -= 1
             self.row[row + 1] -= 1
-        if letter == "B" and self.collum[column] == 2:
+        elif letter == "B" and self.collum[column] == 2:
             self.matrix[row, column] = "B"
             self.matrix[row - 1, column] =  "t"
             self.piece_water_spaces(row - 1, column, "T")
             self.collum[column] = 0
             self.row[row] -= 1
             self.row[row - 1] -= 1
-        if letter == "L" and self.row[row] == 2:
+        elif letter == "L" and self.row[row] == 2:
             self.matrix[row, column] = "L"
             self.matrix[row, column + 1] = "r"
             self.piece_water_spaces(row, column + 1, "R")
             self.row[row] = 0
             self.collum[column] -= 1
             self.row[column + 1] -= 1
-        if letter == "R" and self.row[row] == 2:
+        elif letter == "R" and self.row[row] == 2:
             self.matrix[row, column] = "R"
             self.matrix[row, column - 1] = "l"
             self.piece_water_spaces(row, column - 1, "L")
             self.row[row] = 0
             self.collum[column] -= 1
             self.row[column - 1] -= 1
+        else:
+            Board.boardHints.append([row, column, letter])
 
     @staticmethod
     def parse_instance():
@@ -287,6 +290,8 @@ class Board:
         for i in range(hints):
             if hints_list[i][2] == "C":
                 new_board.matrix[hints_list[i][0], hints_list[i][1]] = "C"
+                new_board.row[hints_list[i][0]] -= 1
+                new_board.collum[hints_list[i][1]] -= 1
                 new_board.piece_water_spaces(
                 hints_list[i][0], hints_list[i][1], hints_list[i][2]
             )
@@ -294,7 +299,8 @@ class Board:
             new_board.piece_water_spaces(
                 hints_list[i][0], hints_list[i][1], hints_list[i][2]
             )
-            new_board.fit_boat_of_two(hints_list[i][0], hints_list[i][1], hints_list[i][2])
+            new_board.fit_hints(hints_list[i][0], hints_list[i][1], hints_list[i][2])
+
 
         return new_board
 
@@ -303,7 +309,7 @@ class Bimaru(Problem):
     def __init__(self, board: Board):
         """O construtor especifica o estado inicial."""
         board.fill_water()
-        board.print_Board()
+        #board.print_Board()
         self.initial = BimaruState(board)
 
     def actions_4_boat(self, state: BimaruState, actions_list):
@@ -411,11 +417,16 @@ class Bimaru(Problem):
         partir do estado passado como argumento."""
         actions_list = []
 
-        self.actions_4_boat(state, actions_list)
-        self.actions_3_boat(state, actions_list)
-        self.actions_2_boat(state, actions_list)
-        self.actions_1_boat(state, actions_list)
+        if state.board.BoatSizes[4-1] > 0: 
+            self.actions_4_boat(state, actions_list)
+        elif state.board.BoatSizes[3-1] > 0: 
+            self.actions_3_boat(state, actions_list)
+        elif state.board.BoatSizes[2-1] > 0: 
+            self.actions_2_boat(state, actions_list)
+        elif state.board.BoatSizes[1-1] > 0: 
+            self.actions_1_boat(state, actions_list)
 
+        print("action list",actions_list)
         return actions_list
             
 
@@ -424,11 +435,13 @@ class Bimaru(Problem):
         'state' passado como argumento. A ação a executar deve ser uma
         das presentes na lista obtida pela execução de
         self.actions(state)."""
-        print(action)
+        print("action", action)
         new_state = BimaruState(state.board.deep_copy())
+        print("before doing action","row" ,new_state.board.row,"collum",new_state.board.collum)
         new_state.board.insert_ship(action)
         new_state.board.fill_water()
         new_state.board.print_Board()
+        print("board above", state.id,"row", state.board.row,"collum", state.board.collum)
         return new_state
 
     def goal_test(self, state: BimaruState):
@@ -440,9 +453,12 @@ class Bimaru(Problem):
             if i != 0:      
                 return False
 
-
         for (i, j) in (self.state.board.row, self.state.board.collum):          #verificação das partes dos barcos
-            if i != 0 or j != 0:
+            if (i != -1 and i != 0) or (j != -1 and j != 0):
+                return False
+            
+        for i in Board.boardHints:
+            if i[2] != state.board.matrix[i[0], i[1].capitalize()]:
                 return False
         
         # TODO
@@ -450,16 +466,24 @@ class Bimaru(Problem):
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
-        # TODO
-        pass
+        h = 0
+        for i in node.state.board.BoatSizes:
+            h += i
 
+        for i in Board.boardHints:
+            if i[2] != node.state.board.matrix[i[0], i[1]].capitalize():
+                h += 1
+        return h
+
+        # TODO
     # TODO: outros metodos da classe
 
 
 if __name__ == "__main__":
     ola = Board.parse_instance()
     new_problem = Bimaru(ola)
-    print(breadth_first_tree_search(new_problem).solution())
+    print(astar_search
+          (new_problem).solution())
     
     """
     counter = 4
