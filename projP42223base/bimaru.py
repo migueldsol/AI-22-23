@@ -131,8 +131,10 @@ class Board:
                 self.matrix[row - 1, column] = "."
             if column > 0:
                 self.matrix[row, column - 1] = "."
+                self.matrix[row + 1, column - 1] = "."
             if column < 9:
                 self.matrix[row, column + 1] = "."
+                self.matrix[row + 1, column + 1] = "."
             if column > 0 and row > 0:
                 self.matrix[row - 1, column - 1] = "."
             if column < 9 and row > 0:
@@ -142,8 +144,10 @@ class Board:
                 self.matrix[row + 1, column] = "."
             if column > 0:
                 self.matrix[row, column - 1] = "."
+                self.matrix[row - 1, column - 1] = "."
             if column < 9:
                 self.matrix[row, column + 1] = "."
+                self.matrix[row - 1, column + 1] = "."
             if column > 0 and row < 9:
                 self.matrix[row + 1, column - 1] = "."
             if column < 9 and row < 9:
@@ -180,10 +184,12 @@ class Board:
         elif letter.capitalize() == "L":
             if row > 0:
                 self.matrix[row - 1, column] = "."
+                self.matrix[row - 1, column + 1] = "."
             if column > 0:
                 self.matrix[row, column - 1] = "."
             if row < 9:
                 self.matrix[row + 1, column] = "."
+                self.matrix[row + 1, column + 1] = "."
             if column > 0 and row > 0:
                 self.matrix[row - 1, column - 1] = "."
             if column > 0 and row < 9:
@@ -192,10 +198,12 @@ class Board:
         elif letter.capitalize() == "R":
             if row > 0:
                 self.matrix[row - 1, column] = "."
+                self.matrix[row - 1, column - 1] = "."
             if column < 9:
                 self.matrix[row, column + 1] = "."
             if row < 9:
                 self.matrix[row + 1, column] = "."
+                self.matrix[row + 1, column - 1] = "."
             if column < 9 and row > 0:
                 self.matrix[row - 1, column + 1] = "."
             if column < 9 and row < 9:
@@ -242,6 +250,7 @@ class Board:
             self.collum[column] = 0
             self.row[row] -= 1
             self.row[row + 1] -= 1
+            self.BoatSizes[2-1] -= 1
         elif letter == "B" and self.collum[column] == 2:
             self.matrix[row, column] = "B"
             self.matrix[row - 1, column] =  "t"
@@ -249,6 +258,7 @@ class Board:
             self.collum[column] = 0
             self.row[row] -= 1
             self.row[row - 1] -= 1
+            self.BoatSizes[2-1] -= 1
         elif letter == "L" and self.row[row] == 2:
             self.matrix[row, column] = "L"
             self.matrix[row, column + 1] = "r"
@@ -256,6 +266,7 @@ class Board:
             self.row[row] = 0
             self.collum[column] -= 1
             self.row[column + 1] -= 1
+            self.BoatSizes[2-1] -= 1
         elif letter == "R" and self.row[row] == 2:
             self.matrix[row, column] = "R"
             self.matrix[row, column - 1] = "l"
@@ -263,6 +274,7 @@ class Board:
             self.row[row] = 0
             self.collum[column] -= 1
             self.row[column - 1] -= 1
+            self.BoatSizes[2-1] -= 1
         else:
             Board.boardHints.append([row, column, letter])
 
@@ -294,7 +306,8 @@ class Board:
                 new_board.collum[hints_list[i][1]] -= 1
                 new_board.piece_water_spaces(
                 hints_list[i][0], hints_list[i][1], hints_list[i][2]
-            )
+                )
+                new_board.BoatSizes[1-1] -= 1
                 pass
             new_board.piece_water_spaces(
                 hints_list[i][0], hints_list[i][1], hints_list[i][2]
@@ -390,7 +403,7 @@ class Bimaru(Problem):
                             actions_list.append((2,(row_i, col_j,"L"),(row_i, col_j + 1,"R")))
             
             for col_k in range(len(state.board.collum)):        #percorrer as colunas com o numero de barcos
-                if state.board.row[col_k] >= 2:                 #posso colocar um barco de 2?
+                if state.board.collum[col_k] >= 2:                 #posso colocar um barco de 2?
                     for row_l in range(10):
                         #verificar se:
                         #       não estou no fim do board
@@ -404,7 +417,7 @@ class Bimaru(Problem):
     def actions_1_boat(self, state: BimaruState, actions_list):
         if state.board.BoatSizes[1 - 1] != 0:
             for row_i in range(len(state.board.row)):           #percorrer as linhas com o numero de barcos
-                 if state.board.row[row_i] >= 1:                #posso colocar um barco de 1?
+                 if state.board.row[row_i] >= 1:               #posso colocar um barco de 1?
                      for col_j in range(10):
                         #verificar se:
                         #       posso colocar uma peça na coluna
@@ -417,6 +430,9 @@ class Bimaru(Problem):
         partir do estado passado como argumento."""
         actions_list = []
 
+        if state.id == 63:
+            print("ayo 63")
+
         if state.board.BoatSizes[4-1] > 0: 
             self.actions_4_boat(state, actions_list)
         elif state.board.BoatSizes[3-1] > 0: 
@@ -426,7 +442,7 @@ class Bimaru(Problem):
         elif state.board.BoatSizes[1-1] > 0: 
             self.actions_1_boat(state, actions_list)
 
-        print("action list",actions_list)
+        print("action list",actions_list, "state_id", state.id)
         return actions_list
             
 
@@ -441,7 +457,7 @@ class Bimaru(Problem):
         new_state.board.insert_ship(action)
         new_state.board.fill_water()
         new_state.board.print_Board()
-        print("board above", state.id,"row", state.board.row,"collum", state.board.collum)
+        print("board above", new_state.id,"row", new_state.board.row,"collum", new_state.board.collum)
         return new_state
 
     def goal_test(self, state: BimaruState):
@@ -449,16 +465,21 @@ class Bimaru(Problem):
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas de acordo com as regras do problema."""
 
+        if (state.id == 75):
+            print("here we  go again")
         for i in state.board.BoatSizes:             #verificação dos barcos
             if i != 0:      
                 return False
 
-        for (i, j) in (self.state.board.row, self.state.board.collum):          #verificação das partes dos barcos
-            if (i != -1 and i != 0) or (j != -1 and j != 0):
+        for i in state.board.row:          #verificação das partes dos barcos
+            if (i != -1 and i != 0):
+                return False
+        for j in state.board.collum:
+            if (j != -1 and j != 0):
                 return False
             
         for i in Board.boardHints:
-            if i[2] != state.board.matrix[i[0], i[1].capitalize()]:
+            if i[2] != state.board.matrix[i[0], i[1]].capitalize():
                 return False
         
         # TODO
@@ -473,6 +494,8 @@ class Bimaru(Problem):
         for i in Board.boardHints:
             if i[2] != node.state.board.matrix[i[0], i[1]].capitalize():
                 h += 1
+        if (node.parent != None):
+            print("idk what this gona print parent->",node.parent.state.id)
         return h
 
         # TODO
