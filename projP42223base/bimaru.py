@@ -239,10 +239,10 @@ class Board:
             for j in range(len(self.row)):
                 board_string += self.matrix[i, j]
             board_string += "\n"
-        print(board_string)
+        print(board_string[:-1])
 
     def fit_hints(self, row: int, column: int, letter: str):
-        if letter == "C" and self.collum[column] >= 1 and self.row[row] >= 1:
+        if letter == "C":
                 self.matrix[row, column] = "C"
                 self.row[row] -= 1
                 self.collum[column] -= 1
@@ -250,9 +250,6 @@ class Board:
                 row, column, letter
                 )
                 self.BoatSizes[1-1] -= 1
-                self.piece_water_spaces(
-                    row, column, letter
-                )
         #Verifica se é possivel meter uma peça de tamanho dois numa linha com tamanho dois
         elif letter == "T" and self.collum[column] == 2:
             self.matrix[row, column] = "T"
@@ -429,6 +426,7 @@ class Bimaru(Problem):
     def actions(self, state: BimaruState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
+
         actions_list = []
 
 
@@ -452,6 +450,13 @@ class Bimaru(Problem):
         new_state = BimaruState(state.board.deep_copy())
         new_state.board.insert_ship(action)
         new_state.board.fill_water()
+
+        #print("------------------------------------------------------------------")
+        #print("parent id",state.id)
+        #state.board.print_Board()
+        #print('\n',"childs id", new_state.id)
+        #new_state.board.print_Board()
+
         return new_state
 
     def goal_test(self, state: BimaruState):
@@ -483,39 +488,43 @@ class Bimaru(Problem):
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
         h = 0
-        for i in node.state.board.BoatSizes:
-            h += i
+        for i in range(10):
+            row_val = node.state.board.row[i] * 10
+            collum_val = node.state.board.collum[i] * 10
+            if (row_val > 0):
+                h += row_val + 50
+
+            if (collum_val > 0):
+                h += collum_val + 50
 
         for i in Board.boardHints:
             if i[2] != node.state.board.matrix[i[0], i[1]].capitalize():
-                h += 1
+                h += 100
+
+            #if i[2] == "M" and\
+            #node.state.board.adjacent_vertical_values(i[1], i[2]) and state.board.matrix[!= state.board.matrix[i[0], i[1]].capitalize():
+
+        print("*******************************")
+        print("Node state id", node.state.id, "Node h value", h)
+        print("*******************************")
+        
 
         return h
 
         # TODO
     # TODO: outros metodos da classe
 
+    #def path_cost(self, c, state1, action, state2):
+    #    return c + (state1.h() - state2.h()) 
+
 
 if __name__ == "__main__":
     ola = Board.parse_instance()
+
     new_problem = Bimaru(ola)
-    goal_node = astar_search(new_problem)
-    goal_node.state.board.print_Board()
+    goal_node_2 = depth_first_tree_search(new_problem)
     
-    """
-    counter = 4
-    for i in new_problem.actions(new_problem.inicial_state):
-        even_newer_problem = Bimaru(ola)
-        if int(i[0]) == counter:
-            print("\nBARCOS DE " + str(counter) + "-----------")
-            counter -= 1
-        print(i)
-        even_newer_problem.result(even_newer_problem.inicial_state, i)
-    """
-        
-    # TODO:
-    # Ler o ficheiro do standard input,
-    # Usar uma técnica de procura para resolver a instância,
-    # Retirar a solução a partir do nó resultante,
-    # Imprimir para o standard output no formato indicado.
-    pass
+    #print("\n")
+    goal_node_2.state.board.print_Board()
+
+
