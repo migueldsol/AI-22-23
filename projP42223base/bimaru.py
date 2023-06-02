@@ -45,10 +45,11 @@ class Board:
     boardHints = []
     waterHints = []
 
-    def __init__(self,rows: np.array, collums: np.array, board = None, BoatSizes = None):
+    def __init__(self,rows: np.array, collums: np.array, board = None, BoatSizes = None, flag = None):
         if board is None:
             self.matrix = np.full((10, 10), "0")
             self.BoatSizes = np.array([4,3,2,1])   
+            self.flag = flag
         else:
             self.matrix = board
             self.BoatSizes = BoatSizes
@@ -56,6 +57,7 @@ class Board:
         self.row = rows
         self.collum = collums
         self.boatPositions = ["C", "T", "M", "B", "L", "R"]
+        self.flag = False
 
     
     def deep_copy(self):
@@ -63,7 +65,7 @@ class Board:
         new_row = np.copy(self.row)
         new_collum = np.copy(self.collum)
         new_BoatSize = np.copy(self.BoatSizes) 
-        new_board = Board(new_row, new_collum, new_matrix, new_BoatSize)
+        new_board = Board(new_row, new_collum, new_matrix, new_BoatSize, self.flag)
         return new_board
 
     def get_value(self, row: int, col: int) -> str:
@@ -289,6 +291,22 @@ class Board:
         else:
             Board.boardHints.append([row, column, letter])
 
+    def check_frutfullness(self):
+        for i in range(10):
+            array_row = self.matrix[i, :]
+            array_col = self.matrix[:,i]
+            row_mask = (array_row == '0')
+            col_mask = (array_col == '0')
+            
+            if (self.row[i] > np.extract(row_mask, array_row).size):
+                self.flag = True
+                return
+            
+            elif (self.collum[i] > np.extract(col_mask, array_col).size):
+                self.flag = True
+                return
+
+
     @staticmethod
     def parse_instance():
         """Lê o test do standard input (stdin) que é passado como argumento
@@ -429,6 +447,8 @@ class Bimaru(Problem):
 
         actions_list = []
 
+        if (state.board.flag):
+            return actions_list
 
         if state.board.BoatSizes[4-1] > 0: 
             self.actions_4_boat(state, actions_list)
@@ -451,11 +471,14 @@ class Bimaru(Problem):
         new_state.board.insert_ship(action)
         new_state.board.fill_water()
 
-        #print("------------------------------------------------------------------")
-        #print("parent id",state.id)
+        new_state.board.check_frutfullness()
+
+        print("------------------------------------------------------------------")
+        print("parent id",state.id)
         #state.board.print_Board()
-        #print('\n',"childs id", new_state.id)
-        #new_state.board.print_Board()
+        print('\n',"childs id", new_state.id)
+        new_state.board.print_Board()
+        print("row", new_state.board.row, "column", new_state.board.collum)
 
         return new_state
 
@@ -524,7 +547,7 @@ if __name__ == "__main__":
     new_problem = Bimaru(ola)
     goal_node_2 = depth_first_tree_search(new_problem)
     
-    #print("\n")
+    print("\n")
     goal_node_2.state.board.print_Board()
 
 
