@@ -46,12 +46,12 @@ class Board:
     waterHints = []
 
     def __init__(
-        self, rows: np.array, collums: np.array, board=None, BoatSizes=None, flag=None
+        self, rows: np.array, collums: np.array, board=None, BoatSizes=None, end_flag=None
     ):
         if board is None:
             self.matrix = np.full((10, 10), "0")
             self.BoatSizes = np.array([4, 3, 2, 1])
-            self.flag = flag
+            self.end_flag = end_flag
         else:
             self.matrix = board
             self.BoatSizes = BoatSizes
@@ -59,14 +59,14 @@ class Board:
         self.row = rows
         self.collum = collums
         self.boatPositions = ["C", "T", "M", "B", "L", "R"]
-        self.flag = False
+        self.end_flag = False
 
     def deep_copy(self):
         new_matrix = np.copy(self.matrix)
         new_row = np.copy(self.row)
         new_collum = np.copy(self.collum)
         new_BoatSize = np.copy(self.BoatSizes)
-        new_board = Board(new_row, new_collum, new_matrix, new_BoatSize, self.flag)
+        new_board = Board(new_row, new_collum, new_matrix, new_BoatSize, self.end_flag)
         return new_board
 
     def get_value(self, row: int, col: int) -> str:
@@ -293,7 +293,7 @@ class Board:
             self.collum[column] -= 1
             self.collum[column + 1] -= 1
             self.BoatSizes[2 - 1] -= 1
-        elif letter == "R" and self.row[row] == 2 or letter == "R":
+        elif letter == "R" and self.row[row] == 2:
             self.matrix[row, column] = "R"
             self.matrix[row, column - 1] = "l"
             self.piece_water_spaces(row, column - 1, "L")
@@ -316,13 +316,20 @@ class Board:
             row_mask = array_row == "0"
             col_mask = array_col == "0"
 
-            if self.row[i] > np.extract(row_mask, array_row).size:
-                self.flag = True
-                return
+            verify_row_size = np.extract(row_mask, array_row).size
+            verify_col_size = np.extract(col_mask, array_col).size
 
-            elif self.collum[i] > np.extract(col_mask, array_col).size:
-                self.flag = True
+            if self.row[i] > verify_row_size:
+                self.end_flag = True
                 return
+            
+            elif self.collum[i] > verify_col_size:
+                self.end_flag = True
+                return
+            
+            """
+            elif self.collum[i] == verify_array:
+            """
 
     @staticmethod
     def parse_instance():
@@ -359,9 +366,7 @@ class Bimaru(Problem):
 
     def actions_4_boat(self, state: BimaruState, actions_list):
         if state.board.BoatSizes[4 - 1] != 0:  # faltam barcos de 4?
-            for row_i in range(
-                len(state.board.row)
-            ):  # percorrer as rows com os numeros de barcos
+            for row_i in range(10):  # percorrer as rows com os numeros de barcos
                 if (
                     state.board.row[row_i] >= 4
                 ):  # existe alguma row para por um barco de 4 peças?
@@ -374,10 +379,13 @@ class Bimaru(Problem):
                             col_j <= 6
                             and state.board.collum[col_j] >= 1
                             and state.board.matrix[row_i, col_j] == "0"
+
                             and state.board.collum[col_j + 1] >= 1
                             and state.board.matrix[row_i, col_j + 1] == "0"
+
                             and state.board.collum[col_j + 2] >= 1
                             and state.board.matrix[row_i, col_j + 2] == "0"
+
                             and state.board.collum[col_j + 3] >= 1
                             and state.board.matrix[row_i, col_j + 3] == "0"
                         ):
@@ -391,9 +399,7 @@ class Bimaru(Problem):
                                 )
                             )
 
-            for col_k in range(
-                len(state.board.collum)
-            ):  # percorrer as collums com os numeros de barcos
+            for col_k in range(10):  # percorrer as collums com os numeros de barcos
                 if (
                     state.board.collum[col_k] >= 4
                 ):  # existe alguma collum para por um barco de 4?
@@ -406,10 +412,13 @@ class Bimaru(Problem):
                             row_l <= 6
                             and state.board.row[row_l] >= 1
                             and state.board.matrix[row_l, col_k] == "0"
+
                             and state.board.row[row_l + 1] >= 1
                             and state.board.matrix[row_l + 1, col_k] == "0"
+
                             and state.board.row[row_l + 2] >= 1
                             and state.board.matrix[row_l + 2, col_k] == "0"
+
                             and state.board.row[row_l + 3] >= 1
                             and state.board.matrix[row_l + 3, col_k] == "0"
                         ):
@@ -425,9 +434,7 @@ class Bimaru(Problem):
 
     def actions_3_boat(self, state: BimaruState, actions_list):
         if state.board.BoatSizes[3 - 1] != 0:  # faltam barcos de 3?
-            for row_i in range(
-                len(state.board.row)
-            ):  # percorrer as rows com os numeros de barcos
+            for row_i in range(10):  # percorrer as rows com os numeros de barcos
                 if state.board.row[row_i] >= 3:  # posso colocar um barco de 3?
                     for col_j in range(10):
                         # verificar se:
@@ -438,8 +445,10 @@ class Bimaru(Problem):
                             col_j <= 7
                             and state.board.collum[col_j] >= 1
                             and state.board.matrix[row_i, col_j] == "0"
+
                             and state.board.collum[col_j + 1] >= 1
                             and state.board.matrix[row_i, col_j + 1] == "0"
+
                             and state.board.collum[col_j + 2] >= 1
                             and state.board.matrix[row_i, col_j + 2] == "0"
                         ):
@@ -452,9 +461,7 @@ class Bimaru(Problem):
                                 )
                             )
 
-            for col_k in range(
-                len(state.board.collum)
-            ):  # percorrer as colunas com os numeros dos barcos
+            for col_k in range(10):  # percorrer as colunas com os numeros dos barcos
                 if state.board.collum[col_k] >= 3:  # posso colocar um barco de 3?
                     for row_l in range(10):
                         # verificar se:
@@ -465,8 +472,10 @@ class Bimaru(Problem):
                             row_l <= 7
                             and state.board.row[row_l] >= 1
                             and state.board.matrix[row_l, col_k] == "0"
+
                             and state.board.row[row_l + 1] >= 1
                             and state.board.matrix[row_l + 1, col_k] == "0"
+
                             and state.board.row[row_l + 2] >= 1
                             and state.board.matrix[row_l + 2, col_k] == "0"
                         ):
@@ -481,9 +490,7 @@ class Bimaru(Problem):
 
     def actions_2_boat(self, state: BimaruState, actions_list):
         if state.board.BoatSizes[2 - 1] != 0:  # faltam barcos de 2?
-            for row_i in range(
-                len(state.board.row)
-            ):  # percorrer as linhas com o numero de barcos
+            for row_i in range(10):  # percorrer as linhas com o numero de barcos
                 if state.board.row[row_i] >= 2:  # posso colocar um barco de 2?
                     for col_j in range(10):
                         # verificar se:
@@ -494,6 +501,7 @@ class Bimaru(Problem):
                             col_j <= 8
                             and state.board.collum[col_j] >= 1
                             and state.board.matrix[row_i, col_j] == "0"
+
                             and state.board.collum[col_j + 1] >= 1
                             and state.board.matrix[row_i, col_j + 1] == "0"
                         ):
@@ -501,9 +509,7 @@ class Bimaru(Problem):
                                 (2, (row_i, col_j, "L"), (row_i, col_j + 1, "R"))
                             )
 
-            for col_k in range(
-                len(state.board.collum)
-            ):  # percorrer as colunas com o numero de barcos
+            for col_k in range(10):  # percorrer as colunas com o numero de barcos
                 if state.board.collum[col_k] >= 2:  # posso colocar um barco de 2?
                     for row_l in range(10):
                         # verificar se:
@@ -514,6 +520,7 @@ class Bimaru(Problem):
                             row_l <= 8
                             and state.board.row[row_l] >= 1
                             and state.board.matrix[row_l, col_k] == "0"
+
                             and state.board.row[row_l + 1] >= 1
                             and state.board.matrix[row_l + 1, col_k] == "0"
                         ):
@@ -523,9 +530,7 @@ class Bimaru(Problem):
 
     def actions_1_boat(self, state: BimaruState, actions_list):
         if state.board.BoatSizes[1 - 1] != 0:
-            for row_i in range(
-                len(state.board.row)
-            ):  # percorrer as linhas com o numero de barcos
+            for row_i in range(10):  # percorrer as linhas com o numero de barcos
                 if state.board.row[row_i] >= 1:  # posso colocar um barco de 1?
                     for col_j in range(10):
                         # verificar se:
@@ -543,7 +548,7 @@ class Bimaru(Problem):
 
         actions_list = []
 
-        if state.board.flag:
+        if state.board.end_flag:
             return actions_list
 
         if state.board.BoatSizes[4 - 1] > 0:
@@ -568,11 +573,11 @@ class Bimaru(Problem):
 
         new_state.board.check_frutfullness()
 
-        # print("------------------------------------------------------------------")
-        # print("parent id", state.id)
+        print("------------------------------------------------------------------")
+        print("parent id", state.id)
         # state.board.print_Board()
-        # print("\n", "childs id", new_state.id)
-        # new_state.board.print_Board()
+        print("\n", "childs id", new_state.id)
+        new_state.board.print_Board()
 
         return new_state
 
@@ -592,14 +597,16 @@ class Bimaru(Problem):
             if j != -1 and j != 0:
                 return False
 
-        for i in Board.boardHints:
+        for i in Board.boardHints:  #verificação das hints
             if i[2] != state.board.matrix[i[0], i[1]].capitalize():
                 return False
+        
+        #colocar as hints bonitas
         for i in Board.boardHints:
             state.board.matrix[i[0], i[1]] = i[2]
         for i in Board.waterHints:
             state.board.matrix[i[0], i[1]] = i[2]
-        # TODO
+
         return True
 
     def h(self, node: Node):
@@ -621,9 +628,9 @@ class Bimaru(Problem):
             # if i[2] == "M" and\
             # node.state.board.adjacent_vertical_values(i[1], i[2]) and state.board.matrix[!= state.board.matrix[i[0], i[1]].capitalize():
 
-        # print("*******************************")
-        # print("Node state id", node.state.id, "Node h value", h)
-        # print("*******************************")
+        print("*******************************")
+        print("Node state id", node.state.id, "Node h value", h)
+        print("*******************************")
 
         return h
 
@@ -631,14 +638,23 @@ class Bimaru(Problem):
 
     # TODO: outros metodos da classe
 
-    # def path_cost(self, c, state1, action, state2):
-    #    return c + (state1.h() - state2.h())
+    def path_cost(self, c, state1, action, state2):
+        print( c + np.count_nonzero(
+            np.not_equal(state1.board.matrix, state2.board.matrix)
+            )  * 10)
+        return c + np.count_nonzero(
+            np.not_equal(state1.board.matrix, state2.board.matrix)
+            )  * 10
 
 
 if __name__ == "__main__":
     ola = Board.parse_instance()
     new_problem = Bimaru(ola)
-    goal_node_2 = depth_first_tree_search(new_problem)
+    #goal_node_2 = depth_first_tree_search(new_problem)
 
-    # print("\n")
-    goal_node_2.state.board.print_Board()
+    goal_node_3 = astar_search(new_problem)
+
+    print("\n")
+    #goal_node_2.state.board.print_Board()
+
+    goal_node_3.board.print_Board()
