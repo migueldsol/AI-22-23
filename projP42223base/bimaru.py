@@ -17,7 +17,7 @@ from search import (
     depth_first_tree_search,
     greedy_search,
     recursive_best_first_search,
-    depth_limited_search
+    depth_limited_search,
 )
 
 
@@ -45,10 +45,12 @@ class Board:
     boardHints = []
     waterHints = []
 
-    def __init__(self,rows: np.array, collums: np.array, board = None, BoatSizes = None, flag = None):
+    def __init__(
+        self, rows: np.array, collums: np.array, board=None, BoatSizes=None, flag=None
+    ):
         if board is None:
             self.matrix = np.full((10, 10), "0")
-            self.BoatSizes = np.array([4,3,2,1])   
+            self.BoatSizes = np.array([4, 3, 2, 1])
             self.flag = flag
         else:
             self.matrix = board
@@ -59,12 +61,11 @@ class Board:
         self.boatPositions = ["C", "T", "M", "B", "L", "R"]
         self.flag = False
 
-    
     def deep_copy(self):
         new_matrix = np.copy(self.matrix)
         new_row = np.copy(self.row)
         new_collum = np.copy(self.collum)
-        new_BoatSize = np.copy(self.BoatSizes) 
+        new_BoatSize = np.copy(self.BoatSizes)
         new_board = Board(new_row, new_collum, new_matrix, new_BoatSize, self.flag)
         return new_board
 
@@ -78,9 +79,9 @@ class Board:
     def remove_boat_possibility(self, size):
         self.BoatSizes[size - 1] -= 1
 
-    def check_boat_position(self,position:str):
+    def check_boat_position(self, position: str):
         return True if position in self.boatPositions else False
-        
+
     def adjacent_vertical_values(self, row: int, col: int) -> tuple((str, str)):
         """Devolve os valores imediatamente acima e abaixo,
         respectivamente."""
@@ -112,22 +113,27 @@ class Board:
     def fill_water(self):
         """Verifica que partes tabuleiro ja podemos encher com agua"""
 
-        for index in range(len(self.row)):          #Percorre as rows e collums a procura de 0 partes de barco
-            if self.row[index] == 0:                #Se encontrar valor por colocar coloca "."
+        for index in range(
+            len(self.row)
+        ):  # Percorre as rows e collums a procura de 0 partes de barco
+            if self.row[index] == 0:  # Se encontrar valor por colocar coloca "."
                 for i in range(10):
                     if self.matrix[index, i] == "0":
                         self.matrix[index, i] = "."
-                self.row[index] = -1              #Coloca a row a -1 para indicar que já foi tratada
+                self.row[
+                    index
+                ] = -1  # Coloca a row a -1 para indicar que já foi tratada
 
-            if self.collum[index] == 0:            #Se encontrar valor por colocar coloca "."
+            if self.collum[index] == 0:  # Se encontrar valor por colocar coloca "."
                 for i in range(10):
                     if self.matrix[i, index] == "0":
                         self.matrix[i, index] = "."
-                self.collum[index] = -1           #Coloca a collum a -1 para indicar que já foi tratada
-                
+                self.collum[
+                    index
+                ] = -1  # Coloca a collum a -1 para indicar que já foi tratada
+
     def piece_water_spaces(self, row: int, column: int, letter: str):
         # do a switch case for each letter fill the surrounding with water(T -> top,left,right, B, Middle->M)
-
 
         if letter.capitalize() == "T":
             if row > 0:
@@ -157,6 +163,10 @@ class Board:
                 self.matrix[row + 1, column + 1] = "."
         # middle only left and right positions are filled with water
         elif letter.capitalize() == "M":
+            if row == 9:
+                self.matrix[row - 1, column] = "."
+            if row == 0:
+                self.matrix[row + 1, column] = "."
             if column > 0 and row > 0:
                 self.matrix[row - 1, column - 1] = "."
             if column < 9 and row > 0:
@@ -213,99 +223,106 @@ class Board:
                 self.matrix[row + 1, column + 1] = "."
 
     """Insere uma parte de um navio"""
-    def insert_ship_part(self, row, collum, letter):
 
+    def insert_ship_part(self, row, collum, letter):
         if self.matrix[row, collum] != "0":
-            raise ValueError                        #já tem lá uma parte de navio
-        
-        self.matrix[row, collum] = letter.lower()   #insere letra
-        self.row[row] -= 1                          #atualiza as boat parts da row
-        self.collum[collum] -= 1                    #atualiza as boat parts da collum
+            raise ValueError  # já tem lá uma parte de navio
+
+        self.matrix[row, collum] = letter.lower()  # insere letra
+        self.row[row] -= 1  # atualiza as boat parts da row
+        self.collum[collum] -= 1  # atualiza as boat parts da collum
         self.piece_water_spaces(row, collum, letter)
 
     def insert_ship(self, action):
-        counter = action[0]                         #qual o tamanho do barco?
+        counter = action[0]  # qual o tamanho do barco?
 
-        if self.BoatSizes[counter - 1] <= 0:            #se não puder por barco
+        if self.BoatSizes[counter - 1] <= 0:  # se não puder por barco
             raise ValueError
-        
-        for i in range(1, counter + 1):     #seleciona cada tuplo com (x, (row, col, letter) * xVezes, ...)
+
+        for i in range(
+            1, counter + 1
+        ):  # seleciona cada tuplo com (x, (row, col, letter) * xVezes, ...)
             self.insert_ship_part(action[i][0], action[i][1], action[i][2])
-        
-        self.BoatSizes[counter - 1] -= 1                #reduz numero de barcos
+
+        self.BoatSizes[counter - 1] -= 1  # reduz numero de barcos
 
     def print_Board(self):
         """Imprime o tabuleiro no standard output."""
         board_string = ""
+        # for i in self.collum:
+        # board_string += str(i)
+        # board_string += "\t"
+        # board_string += "\n"
         for i in range(len(self.row)):
             for j in range(len(self.row)):
                 board_string += self.matrix[i, j]
+                # board_string += "\t"
+            # board_string += str(self.row[i])
             board_string += "\n"
         print(board_string[:-1])
 
     def fit_hints(self, row: int, column: int, letter: str):
         if letter == "C":
-                self.matrix[row, column] = "C"
-                self.row[row] -= 1
-                self.collum[column] -= 1
-                self.piece_water_spaces(
-                row, column, letter
-                )
-                self.BoatSizes[1-1] -= 1
-        #Verifica se é possivel meter uma peça de tamanho dois numa linha com tamanho dois
+            self.matrix[row, column] = "C"
+            self.row[row] -= 1
+            self.collum[column] -= 1
+            self.piece_water_spaces(row, column, letter)
+            self.BoatSizes[1 - 1] -= 1
+        # Verifica se é possivel meter uma peça de tamanho dois numa linha com tamanho dois
         elif letter == "T" and self.collum[column] == 2:
             self.matrix[row, column] = "T"
             self.matrix[row + 1, column] = "b"
             self.piece_water_spaces(row + 1, column, "B")
-            self.collum[column] = 0
+            self.collum[column] -= 2
             self.row[row] -= 1
             self.row[row + 1] -= 1
-            self.BoatSizes[2-1] -= 1
+            self.BoatSizes[2 - 1] -= 1
         elif letter == "B" and self.collum[column] == 2:
             self.matrix[row, column] = "B"
-            self.matrix[row - 1, column] =  "t"
+            self.matrix[row - 1, column] = "t"
             self.piece_water_spaces(row - 1, column, "T")
-            self.collum[column] = 0
+            self.collum[column] -= 2
             self.row[row] -= 1
             self.row[row - 1] -= 1
-            self.BoatSizes[2-1] -= 1
+            self.BoatSizes[2 - 1] -= 1
         elif letter == "L" and self.row[row] == 2:
             self.matrix[row, column] = "L"
             self.matrix[row, column + 1] = "r"
             self.piece_water_spaces(row, column + 1, "R")
-            self.row[row] = 0
+            self.row[row] -= 2
             self.collum[column] -= 1
-            self.row[column + 1] -= 1
-            self.BoatSizes[2-1] -= 1
-        elif letter == "R" and self.row[row] == 2:
+            self.collum[column + 1] -= 1
+            self.BoatSizes[2 - 1] -= 1
+        elif letter == "R" and self.row[row] == 2 or letter == "R":
             self.matrix[row, column] = "R"
             self.matrix[row, column - 1] = "l"
             self.piece_water_spaces(row, column - 1, "L")
-            self.row[row] = 0
+            self.row[row] -= 2
             self.collum[column] -= 1
-            self.row[column - 1] -= 1
-            self.BoatSizes[2-1] -= 1
+            self.collum[column - 1] -= 1
+            self.BoatSizes[2 - 1] -= 1
         elif letter == "W":
             self.matrix[row, column] = "."
             Board.waterHints.append([row, column, letter])
         else:
             Board.boardHints.append([row, column, letter])
 
+        self.piece_water_spaces(row, column, letter)
+
     def check_frutfullness(self):
         for i in range(10):
             array_row = self.matrix[i, :]
-            array_col = self.matrix[:,i]
-            row_mask = (array_row == '0')
-            col_mask = (array_col == '0')
-            
-            if (self.row[i] > np.extract(row_mask, array_row).size):
-                self.flag = True
-                return
-            
-            elif (self.collum[i] > np.extract(col_mask, array_col).size):
+            array_col = self.matrix[:, i]
+            row_mask = array_row == "0"
+            col_mask = array_col == "0"
+
+            if self.row[i] > np.extract(row_mask, array_row).size:
                 self.flag = True
                 return
 
+            elif self.collum[i] > np.extract(col_mask, array_col).size:
+                self.flag = True
+                return
 
     @staticmethod
     def parse_instance():
@@ -318,7 +335,7 @@ class Board:
             > from sys import stdin
             > line = stdin.readline().split()
         """
-        row = np.array([int(x.strip()) for x in stdin.readline().split('\t')[1:]])
+        row = np.array([int(x.strip()) for x in stdin.readline().split("\t")[1:]])
         collumn = np.array([int(x.strip()) for x in stdin.readline().split("\t")[1:]])
         hints = int(stdin.readline())
         hints_list = []
@@ -331,7 +348,6 @@ class Board:
         for i in range(hints):
             new_board.fit_hints(hints_list[i][0], hints_list[i][1], hints_list[i][2])
 
-
         return new_board
 
 
@@ -342,103 +358,183 @@ class Bimaru(Problem):
         self.initial = BimaruState(board)
 
     def actions_4_boat(self, state: BimaruState, actions_list):
-        if state.board.BoatSizes[4 - 1] != 0:    #faltam barcos de 4?                                      
-
-            for row_i in range(len(state.board.row)):                   #percorrer as rows com os numeros de barcos
-                if state.board.row[row_i] >= 4:                         #existe alguma row para por um barco de 4 peças?
+        if state.board.BoatSizes[4 - 1] != 0:  # faltam barcos de 4?
+            for row_i in range(
+                len(state.board.row)
+            ):  # percorrer as rows com os numeros de barcos
+                if (
+                    state.board.row[row_i] >= 4
+                ):  # existe alguma row para por um barco de 4 peças?
                     for col_j in range(10):
                         # vamos verificar se:
                         #       se a coluna é menor que 6 (para não exceder o board)
                         #       podemos colocar uma peça nessa coluna
                         #       essa posição está vazia
-                        if col_j <= 6\
-                            and state.board.collum[col_j] >= 1 and state.board.matrix[row_i, col_j] == "0"\
-                            and state.board.collum[col_j + 1] >= 1 and state.board.matrix[row_i, col_j + 1] == "0"\
-                            and state.board.collum[col_j + 2] >= 1 and state.board.matrix[row_i, col_j+ 2] == "0"\
-                            and state.board.collum[col_j + 3] >= 1 and state.board.matrix[row_i, col_j + 3] == "0":
+                        if (
+                            col_j <= 6
+                            and state.board.collum[col_j] >= 1
+                            and state.board.matrix[row_i, col_j] == "0"
+                            and state.board.collum[col_j + 1] >= 1
+                            and state.board.matrix[row_i, col_j + 1] == "0"
+                            and state.board.collum[col_j + 2] >= 1
+                            and state.board.matrix[row_i, col_j + 2] == "0"
+                            and state.board.collum[col_j + 3] >= 1
+                            and state.board.matrix[row_i, col_j + 3] == "0"
+                        ):
+                            actions_list.append(
+                                (
+                                    4,
+                                    (row_i, col_j, "L"),
+                                    (row_i, col_j + 1, "M"),
+                                    (row_i, col_j + 2, "M"),
+                                    (row_i, col_j + 3, "R"),
+                                )
+                            )
 
-                            actions_list.append((4,(row_i, col_j,"L"),(row_i, col_j + 1,"M"),(row_i, col_j + 2,"M"),(row_i, col_j + 3,"R")))
-
-            for col_k in range(len(state.board.collum)):            #percorrer as collums com os numeros de barcos
-                if state.board.collum[col_k] >= 4:                  #existe alguma collum para por um barco de 4?
+            for col_k in range(
+                len(state.board.collum)
+            ):  # percorrer as collums com os numeros de barcos
+                if (
+                    state.board.collum[col_k] >= 4
+                ):  # existe alguma collum para por um barco de 4?
                     for row_l in range(10):
                         # vamos verificar se:
                         #       se a linha é menor que 6 (para não exceder o board)
                         #       podemos colocar uma peça em cada linha
                         #       cada posição está vazia
-                        if row_l <= 6 and state.board.row[row_l] >= 1 and state.board.matrix[row_l, col_k] == "0"\
-                            and state.board.row[row_l + 1] >= 1 and state.board.matrix[row_l + 1, col_k] == "0"\
-                            and state.board.row[row_l + 2] >= 1 and state.board.matrix[row_l + 2, col_k] == "0"\
-                            and state.board.row[row_l + 3] >= 1 and state.board.matrix[row_l + 3, col_k] == "0":
-
-                            actions_list.append((4,(row_l, col_k,"T"),(row_l + 1, col_k,"M"),(row_l + 2, col_k,"M"),(row_l + 3, col_k,"B")))
+                        if (
+                            row_l <= 6
+                            and state.board.row[row_l] >= 1
+                            and state.board.matrix[row_l, col_k] == "0"
+                            and state.board.row[row_l + 1] >= 1
+                            and state.board.matrix[row_l + 1, col_k] == "0"
+                            and state.board.row[row_l + 2] >= 1
+                            and state.board.matrix[row_l + 2, col_k] == "0"
+                            and state.board.row[row_l + 3] >= 1
+                            and state.board.matrix[row_l + 3, col_k] == "0"
+                        ):
+                            actions_list.append(
+                                (
+                                    4,
+                                    (row_l, col_k, "T"),
+                                    (row_l + 1, col_k, "M"),
+                                    (row_l + 2, col_k, "M"),
+                                    (row_l + 3, col_k, "B"),
+                                )
+                            )
 
     def actions_3_boat(self, state: BimaruState, actions_list):
-        if state.board.BoatSizes[3 - 1] != 0:           #faltam barcos de 3?
-            for row_i in range(len(state.board.row)):                                   #percorrer as rows com os numeros de barcos
-                 if state.board.row[row_i] >= 3:                                        #posso colocar um barco de 3?
-                     for col_j in range(10):
-                        #verificar se:
+        if state.board.BoatSizes[3 - 1] != 0:  # faltam barcos de 3?
+            for row_i in range(
+                len(state.board.row)
+            ):  # percorrer as rows com os numeros de barcos
+                if state.board.row[row_i] >= 3:  # posso colocar um barco de 3?
+                    for col_j in range(10):
+                        # verificar se:
                         #       não estou no fim do board
                         #       posso colocar uma peça em cada coluna
                         #       cada posição está vazia
-                        if col_j <= 7\
-                        and state.board.collum[col_j] >= 1 and state.board.matrix[row_i, col_j] == "0"\
-                        and state.board.collum[col_j + 1] >= 1 and state.board.matrix[row_i, col_j + 1] == "0"\
-                        and state.board.collum[col_j + 2] >= 1 and state.board.matrix[row_i, col_j + 2] == "0":
-                            
-                            actions_list.append((3, (row_i, col_j, "L"), (row_i, col_j + 1, "M"), (row_i, col_j + 2, "R")))
+                        if (
+                            col_j <= 7
+                            and state.board.collum[col_j] >= 1
+                            and state.board.matrix[row_i, col_j] == "0"
+                            and state.board.collum[col_j + 1] >= 1
+                            and state.board.matrix[row_i, col_j + 1] == "0"
+                            and state.board.collum[col_j + 2] >= 1
+                            and state.board.matrix[row_i, col_j + 2] == "0"
+                        ):
+                            actions_list.append(
+                                (
+                                    3,
+                                    (row_i, col_j, "L"),
+                                    (row_i, col_j + 1, "M"),
+                                    (row_i, col_j + 2, "R"),
+                                )
+                            )
 
-            for col_k in range(len(state.board.collum)):                            #percorrer as colunas com os numeros dos barcos
-                 if state.board.collum[col_k] >= 3:                                 #posso colocar um barco de 3?
-                     for row_l in range(10):
-                        #verificar se:
+            for col_k in range(
+                len(state.board.collum)
+            ):  # percorrer as colunas com os numeros dos barcos
+                if state.board.collum[col_k] >= 3:  # posso colocar um barco de 3?
+                    for row_l in range(10):
+                        # verificar se:
                         #       não estou no fim do board
                         #       posso colocar uma peça em cada linha
                         #       cada posição está vazia
-                        if row_l <= 7\
-                        and state.board.row[row_l] >= 1 and state.board.matrix[row_l, col_k] == "0"\
-                        and state.board.row[row_l + 1] >= 1 and state.board.matrix[row_l + 1, col_k] == "0"\
-                        and state.board.row[row_l + 2] >= 1 and state.board.matrix[row_l + 2, col_k] == "0":
-                            
-                            actions_list.append((3, (row_l, col_k, "T"), (row_l + 1, col_k, "M"), (row_l + 2, col_k, "B")))
-            
+                        if (
+                            row_l <= 7
+                            and state.board.row[row_l] >= 1
+                            and state.board.matrix[row_l, col_k] == "0"
+                            and state.board.row[row_l + 1] >= 1
+                            and state.board.matrix[row_l + 1, col_k] == "0"
+                            and state.board.row[row_l + 2] >= 1
+                            and state.board.matrix[row_l + 2, col_k] == "0"
+                        ):
+                            actions_list.append(
+                                (
+                                    3,
+                                    (row_l, col_k, "T"),
+                                    (row_l + 1, col_k, "M"),
+                                    (row_l + 2, col_k, "B"),
+                                )
+                            )
+
     def actions_2_boat(self, state: BimaruState, actions_list):
-        if state.board.BoatSizes[2 - 1] != 0:                   #faltam barcos de 2?
-            for row_i in range(len(state.board.row)):           #percorrer as linhas com o numero de barcos
-                if state.board.row[row_i] >= 2:                 #posso colocar um barco de 2?
-                    for col_j in range(10):   
-                        #verificar se:
+        if state.board.BoatSizes[2 - 1] != 0:  # faltam barcos de 2?
+            for row_i in range(
+                len(state.board.row)
+            ):  # percorrer as linhas com o numero de barcos
+                if state.board.row[row_i] >= 2:  # posso colocar um barco de 2?
+                    for col_j in range(10):
+                        # verificar se:
                         #       não estou no fim do board
                         #       posso colocar uma peça em cada coluna
-                        #       se a posição está vazia                  
-                        if col_j <= 8\
-                            and state.board.collum[col_j] >= 1 and state.board.matrix[row_i, col_j] == "0"\
-                            and state.board.collum[col_j + 1] >= 1 and state.board.matrix[row_i, col_j + 1] == "0":
-                            
-                            actions_list.append((2,(row_i, col_j,"L"),(row_i, col_j + 1,"R")))
-            
-            for col_k in range(len(state.board.collum)):        #percorrer as colunas com o numero de barcos
-                if state.board.collum[col_k] >= 2:                 #posso colocar um barco de 2?
+                        #       se a posição está vazia
+                        if (
+                            col_j <= 8
+                            and state.board.collum[col_j] >= 1
+                            and state.board.matrix[row_i, col_j] == "0"
+                            and state.board.collum[col_j + 1] >= 1
+                            and state.board.matrix[row_i, col_j + 1] == "0"
+                        ):
+                            actions_list.append(
+                                (2, (row_i, col_j, "L"), (row_i, col_j + 1, "R"))
+                            )
+
+            for col_k in range(
+                len(state.board.collum)
+            ):  # percorrer as colunas com o numero de barcos
+                if state.board.collum[col_k] >= 2:  # posso colocar um barco de 2?
                     for row_l in range(10):
-                        #verificar se:
+                        # verificar se:
                         #       não estou no fim do board
                         #       posso colocar uma peça em cada linha
-                        #       se a posição está vazia      
-                        if row_l <= 8\
-                        and state.board.row[row_l] >= 1 and state.board.matrix[row_l, col_k] == "0"\
-                        and state.board.row[row_l + 1] >= 1 and state.board.matrix[row_l + 1, col_k] == "0":
-                            actions_list.append((2,(row_l, col_k,"T"),(row_l + 1, col_k,"B")))
-    
+                        #       se a posição está vazia
+                        if (
+                            row_l <= 8
+                            and state.board.row[row_l] >= 1
+                            and state.board.matrix[row_l, col_k] == "0"
+                            and state.board.row[row_l + 1] >= 1
+                            and state.board.matrix[row_l + 1, col_k] == "0"
+                        ):
+                            actions_list.append(
+                                (2, (row_l, col_k, "T"), (row_l + 1, col_k, "B"))
+                            )
+
     def actions_1_boat(self, state: BimaruState, actions_list):
         if state.board.BoatSizes[1 - 1] != 0:
-            for row_i in range(len(state.board.row)):           #percorrer as linhas com o numero de barcos
-                 if state.board.row[row_i] >= 1:               #posso colocar um barco de 1?
-                     for col_j in range(10):
-                        #verificar se:
+            for row_i in range(
+                len(state.board.row)
+            ):  # percorrer as linhas com o numero de barcos
+                if state.board.row[row_i] >= 1:  # posso colocar um barco de 1?
+                    for col_j in range(10):
+                        # verificar se:
                         #       posso colocar uma peça na coluna
-                        #       se a posição está vazia      
-                        if state.board.collum[col_j] >= 1 and state.board.matrix[row_i, col_j] == "0":
+                        #       se a posição está vazia
+                        if (
+                            state.board.collum[col_j] >= 1
+                            and state.board.matrix[row_i, col_j] == "0"
+                        ):
                             actions_list.append((1, (row_i, col_j, "C")))
 
     def actions(self, state: BimaruState):
@@ -447,20 +543,19 @@ class Bimaru(Problem):
 
         actions_list = []
 
-        if (state.board.flag):
+        if state.board.flag:
             return actions_list
 
-        if state.board.BoatSizes[4-1] > 0: 
+        if state.board.BoatSizes[4 - 1] > 0:
             self.actions_4_boat(state, actions_list)
-        elif state.board.BoatSizes[3-1] > 0: 
+        elif state.board.BoatSizes[3 - 1] > 0:
             self.actions_3_boat(state, actions_list)
-        elif state.board.BoatSizes[2-1] > 0: 
+        elif state.board.BoatSizes[2 - 1] > 0:
             self.actions_2_boat(state, actions_list)
-        elif state.board.BoatSizes[1-1] > 0: 
+        elif state.board.BoatSizes[1 - 1] > 0:
             self.actions_1_boat(state, actions_list)
 
         return actions_list
-            
 
     def result(self, state: BimaruState, action):
         """Retorna o estado resultante de executar a 'action' sobre
@@ -473,12 +568,11 @@ class Bimaru(Problem):
 
         new_state.board.check_frutfullness()
 
-        print("------------------------------------------------------------------")
-        print("parent id",state.id)
-        #state.board.print_Board()
-        print('\n',"childs id", new_state.id)
-        new_state.board.print_Board()
-        print("row", new_state.board.row, "column", new_state.board.collum)
+        # print("------------------------------------------------------------------")
+        # print("parent id", state.id)
+        # state.board.print_Board()
+        # print("\n", "childs id", new_state.id)
+        # new_state.board.print_Board()
 
         return new_state
 
@@ -487,17 +581,17 @@ class Bimaru(Problem):
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas de acordo com as regras do problema."""
 
-        for i in state.board.BoatSizes:             #verificação dos barcos
-            if i != 0:      
+        for i in state.board.BoatSizes:  # verificação dos barcos
+            if i != 0:
                 return False
 
-        for i in state.board.row:          #verificação das partes dos barcos
-            if (i != -1 and i != 0):
+        for i in state.board.row:  # verificação das partes dos barcos
+            if i != -1 and i != 0:
                 return False
         for j in state.board.collum:
-            if (j != -1 and j != 0):
+            if j != -1 and j != 0:
                 return False
-            
+
         for i in Board.boardHints:
             if i[2] != state.board.matrix[i[0], i[1]].capitalize():
                 return False
@@ -514,40 +608,37 @@ class Bimaru(Problem):
         for i in range(10):
             row_val = node.state.board.row[i] * 10
             collum_val = node.state.board.collum[i] * 10
-            if (row_val > 0):
+            if row_val > 0:
                 h += row_val + 50
 
-            if (collum_val > 0):
+            if collum_val > 0:
                 h += collum_val + 50
 
         for i in Board.boardHints:
             if i[2] != node.state.board.matrix[i[0], i[1]].capitalize():
                 h += 100
 
-            #if i[2] == "M" and\
-            #node.state.board.adjacent_vertical_values(i[1], i[2]) and state.board.matrix[!= state.board.matrix[i[0], i[1]].capitalize():
+            # if i[2] == "M" and\
+            # node.state.board.adjacent_vertical_values(i[1], i[2]) and state.board.matrix[!= state.board.matrix[i[0], i[1]].capitalize():
 
-        print("*******************************")
-        print("Node state id", node.state.id, "Node h value", h)
-        print("*******************************")
-        
+        # print("*******************************")
+        # print("Node state id", node.state.id, "Node h value", h)
+        # print("*******************************")
 
         return h
 
         # TODO
+
     # TODO: outros metodos da classe
 
-    #def path_cost(self, c, state1, action, state2):
-    #    return c + (state1.h() - state2.h()) 
+    # def path_cost(self, c, state1, action, state2):
+    #    return c + (state1.h() - state2.h())
 
 
 if __name__ == "__main__":
     ola = Board.parse_instance()
-
     new_problem = Bimaru(ola)
     goal_node_2 = depth_first_tree_search(new_problem)
-    
-    print("\n")
+
+    # print("\n")
     goal_node_2.state.board.print_Board()
-
-
