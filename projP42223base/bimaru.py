@@ -2,9 +2,9 @@
 # Devem alterar as classes e funções neste ficheiro de acordo com as instruções do enunciado.
 # Além das funções e classes já definidas, podem acrescentar outras que considerem pertinentes.
 
-# Grupo 00:
-# 00000 Nome1
-# 00000 Nome2
+# Grupo 38:
+# 102710 Miguel Sol
+# 103191 Bernardo Sousa
 
 from sys import stdin
 import numpy as np
@@ -31,8 +31,6 @@ class BimaruState:
 
     def __lt__(self, other):
         return self.id < other.id
-
-    # TODO: outros metodos da classe
 
 
 class Board:
@@ -68,47 +66,6 @@ class Board:
         new_BoatSize = np.copy(self.BoatSizes)
         new_board = Board(new_row, new_collum, new_matrix, new_BoatSize, self.end_flag)
         return new_board
-
-    def get_value(self, row: int, col: int) -> str:
-        """Devolve o valor na respetiva posição do tabuleiro."""
-        return self.matrix[row, col]
-
-    def highest_boat_size(self):
-        return max(self.BoatSizes)
-
-    def remove_boat_possibility(self, size):
-        self.BoatSizes[size - 1] -= 1
-
-    def check_boat_position(self, position: str):
-        return True if position in self.boatPositions else False
-
-    def adjacent_vertical_values(self, row: int, col: int) -> tuple((str, str)):
-        """Devolve os valores imediatamente acima e abaixo,
-        respectivamente."""
-        num1 = None
-        num2 = None
-
-        if 0 < row - 1 < 9:
-            num1 = self.matrix[row - 1, col]
-
-        if 0 < row + 1 < 9:
-            num2 = self.matrix[row + 1, col]
-
-        return (num1, num2)
-
-    def adjacent_horizontal_values(self, row: int, col: int) -> tuple((str, str)):
-        """Devolve os valores imediatamente à esquerda e à direita,
-        respectivamente."""
-        num1 = None
-        num2 = None
-
-        if 0 < col - 1 < 9:
-            num1 = self.matrix[row, col - 1]
-
-        if 0 < col + 1 < 9:
-            num2 = self.matrix[row, col + 1]
-
-        return (num1, num2)
 
     def fill_water(self):
         """Verifica que partes tabuleiro ja podemos encher com agua"""
@@ -249,26 +206,20 @@ class Board:
     def print_Board(self):
         """Imprime o tabuleiro no standard output."""
         board_string = ""
-        # for i in self.collum:
-        # board_string += str(i)
-        # board_string += "\t"
-        # board_string += "\n"
         for i in range(len(self.row)):
             for j in range(len(self.row)):
                 board_string += self.matrix[i, j]
-                # board_string += "\t"
-            # board_string += str(self.row[i])
             board_string += "\n"
         print(board_string[:-1])
 
     def fit_hints(self, row: int, column: int, letter: str):
+        # Peça de tamanho 1 e coloca respetivas aguas a volta
         if letter == "C":
             self.matrix[row, column] = "C"
             self.row[row] -= 1
             self.collum[column] -= 1
             self.piece_water_spaces(row, column, letter)
             self.BoatSizes[1 - 1] -= 1
-        # Verifica se é possivel meter uma peça de tamanho dois numa linha com tamanho dois
         elif letter == "T" and self.collum[column] == 2:
             self.matrix[row, column] = "T"
             self.matrix[row + 1, column] = "b"
@@ -335,12 +286,6 @@ class Board:
     def parse_instance():
         """Lê o test do standard input (stdin) que é passado como argumento
         e retorna uma instância da classe Board.
-
-        Por exemplo:
-            $ python3 bimaru.py < input_T01
-
-            > from sys import stdin
-            > line = stdin.readline().split()
         """
         row = np.array([int(x.strip()) for x in stdin.readline().split("\t")[1:]])
         collumn = np.array([int(x.strip()) for x in stdin.readline().split("\t")[1:]])
@@ -572,13 +517,6 @@ class Bimaru(Problem):
         new_state.board.fill_water()
 
         new_state.board.check_frutfullness()
-
-        print("------------------------------------------------------------------")
-        print("parent id", state.id)
-        # state.board.print_Board()
-        print("\n", "childs id", new_state.id)
-        new_state.board.print_Board()
-
         return new_state
 
     def goal_test(self, state: BimaruState):
@@ -624,37 +562,14 @@ class Bimaru(Problem):
         for i in Board.boardHints:
             if i[2] != node.state.board.matrix[i[0], i[1]].capitalize():
                 h += 100
-
-            # if i[2] == "M" and\
-            # node.state.board.adjacent_vertical_values(i[1], i[2]) and state.board.matrix[!= state.board.matrix[i[0], i[1]].capitalize():
-
-        print("*******************************")
-        print("Node state id", node.state.id, "Node h value", h)
-        print("*******************************")
-
         return h
 
-        # TODO
-
-    # TODO: outros metodos da classe
-
-    def path_cost(self, c, state1, action, state2):
-        print( c + np.count_nonzero(
-            np.not_equal(state1.board.matrix, state2.board.matrix)
-            )  * 10)
-        return c + np.count_nonzero(
-            np.not_equal(state1.board.matrix, state2.board.matrix)
-            )  * 10
+    # def path_cost(self, c, state1, action, state2):
+    # return (c + np.count_nonzero(np.notequal(state1.board.matrix, state2.board.matrix)) * 10)
 
 
 if __name__ == "__main__":
     ola = Board.parse_instance()
     new_problem = Bimaru(ola)
-    #goal_node_2 = depth_first_tree_search(new_problem)
-
-    goal_node_3 = astar_search(new_problem)
-
-    print("\n")
-    #goal_node_2.state.board.print_Board()
-
-    goal_node_3.board.print_Board()
+    goal_node = astar_search(new_problem)
+    goal_node.state.board.print_Board()
